@@ -5,7 +5,7 @@ import Logo from "./lib/Logo.svelte";
 </script>
 
 <main>
-  <div class="container">
+  <div class="container mx-auto">
     <Logo />
     <Editor />
   </div>

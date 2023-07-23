@@ -1,7 +1,8 @@
 import { createPopper } from '@popperjs/core';
 
-const error_translates = {
+export const error_translates = {
     'unknown-word': 'Kata tidak dikenali.',
+    'misspelling': 'Kata salah eja.',
     'extra-space': 'Terdapat spasi berlebih.',
 }
 

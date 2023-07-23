@@ -2,6 +2,7 @@
     import { onMount, onDestroy } from "svelte";
     import { FixerElement } from "./FixerElement";
     import { restoreSelection, saveSelection } from "./selection";
+    import FixList from "./FixList.svelte";
 
     let lastUpdate = Date.now();
     let curVersion = 1;
@@ -9,6 +10,7 @@
     let curTime = Date.now();
     let lastVersion = 1;
     let updateBeacon = null;
+    let responseData = null;
 
     onMount(() => {
         /**
@@ -17,10 +19,11 @@
         const editor = document.querySelector(".editor");
         if (sessionStorage.getItem("text")) {
             editor.innerHTML = sessionStorage.getItem("text");
+            curText = editor.innerText;
         }
         updateBeacon = setInterval(() => {
             lastUpdate = Date.now();
-            if (curVersion !== lastVersion && Date.now() - curTime > 1000) {
+            if (curVersion !== lastVersion && Date.now() - curTime > 200) {
                 lastVersion = curVersion;
                 fetch(
                     "https://api.benerin.co/v1/check?text=" +
@@ -35,15 +38,24 @@
                     .then((data) => {
                         var sel = saveSelection(editor);
                         editor.innerHTML = data.rendered;
+                        responseData = data;
                         // init all fixer elements
                         const fixerElements = document.querySelectorAll("u-x");
-                        fixerElements.forEach((el) => {
-                            var newItem = new FixerElement();
-                            newItem.setAttribute("data-type", el.getAttribute("data-type"));
-                            newItem.setAttribute("data-suggestion", el.getAttribute("data-suggestion"));
-                            newItem.innerText = el.innerText;
-                            el.parentNode.replaceChild(newItem, el);
-                        });
+                        fixerElements.forEach(
+                            (/** @type {HTMLElement} */ el) => {
+                                var newItem = new FixerElement();
+                                newItem.setAttribute(
+                                    "data-type",
+                                    el.getAttribute("data-type")
+                                );
+                                newItem.setAttribute(
+                                    "data-suggestion",
+                                    el.getAttribute("data-suggestion")
+                                );
+                                newItem.innerText = el.innerText;
+                                el.parentNode.replaceChild(newItem, el);
+                            }
+                        );
 
                         setTimeout(() => {
                             editor.focus();
@@ -52,7 +64,7 @@
                         }, 10);
                     });
             }
-        }, 1000);
+        }, 100);
         editor.addEventListener("input", (e) => {
             curText = editor.innerText;
             curVersion++;
@@ -65,13 +77,25 @@
     });
 </script>
 
-<div class="editor" contenteditable />
+<div
+    class="editor"
+    contenteditable
+    data-gramm="false"
+    placeholder={curText ? "" : "Ketik konten"}
+/>
 
 <div>
     {#if curVersion !== lastVersion}
         <div class="text-center text-gray-500">
             <i>Wait for update...</i>
         </div>
+    {:else if responseData && responseData.structure}
+        <div class="text-center text-gray-500">
+            <i>Correction lists:</i>
+        </div>
+        {#each responseData.structure as lexicon}
+            <FixList lexicon={lexicon} />
+        {/each}
     {/if}
 </div>
 
@@ -82,6 +106,13 @@
         padding: 8px;
         min-height: 200px;
         white-space: pre-wrap;
+        font-size: 2em;
+    }
+
+    .editor::before {
+        content: attr(placeholder);
+        color: #ccc;
+        pointer-events: none;
     }
 
     .editor :global(u-x) {
