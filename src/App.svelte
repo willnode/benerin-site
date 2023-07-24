@@ -1,7 +1,6 @@
 <script>
-    import Editor from "./lib/Editor.svelte";
-import Logo from "./lib/Logo.svelte";
-
+  import Editor from "./lib/Editor.svelte";
+  import Logo from "./lib/Logo.svelte";
 </script>
 
 <main>

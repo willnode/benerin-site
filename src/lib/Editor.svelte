@@ -11,6 +11,8 @@
     let lastVersion = 1;
     let updateBeacon = null;
     let responseData = null;
+    let responseErr = null;
+    let responseFetching = false;
 
     onMount(() => {
         /**
@@ -25,6 +27,9 @@
             lastUpdate = Date.now();
             if (curVersion !== lastVersion && Date.now() - curTime > 200) {
                 lastVersion = curVersion;
+                responseData = null;
+                responseErr = null;
+                responseFetching = true;
                 fetch(
                     "https://api.benerin.co/v1/check?text=" +
                         encodeURIComponent(curText),
@@ -62,6 +67,10 @@
                             restoreSelection(editor, sel);
                             sessionStorage.setItem("text", editor.innerHTML);
                         }, 10);
+                    }).catch((err) => {
+                        responseErr = err;
+                    }).finally(() => {
+                        responseFetching = false;
                     });
             }
         }, 100);
@@ -78,8 +87,8 @@
 </script>
 
 <div
-    class="editor"
-    contenteditable
+    class="editor m-2"
+    contenteditable={!responseFetching}
     data-gramm="false"
     placeholder={curText ? "" : "Ketik konten"}
 />
@@ -87,15 +96,28 @@
 <div>
     {#if curVersion !== lastVersion}
         <div class="text-center text-gray-500">
-            <i>Wait for update...</i>
+            <i>Menunggu selesai mengetik...</i>
         </div>
     {:else if responseData && responseData.structure}
         <div class="text-center text-gray-500">
-            <i>Correction lists:</i>
+            <i>Daftar koreksi:</i>
         </div>
         {#each responseData.structure as lexicon}
             <FixList lexicon={lexicon} />
         {/each}
+    {:else if responseErr}
+        <div class="text-center text-gray-500">
+            <i>Ada kesalahan teknis...</i>
+            <p class="font-mono">{responseErr}</p>
+        </div>
+    {:else if responseFetching}
+        <div class="text-center text-gray-500">
+            <i>Menunggu data...</i>
+        </div>
+    {:else}
+        <div class="text-center text-gray-500">
+            <i>...</i>
+        </div>
     {/if}
 </div>
 
