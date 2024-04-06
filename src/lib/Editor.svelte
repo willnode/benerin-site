@@ -1,75 +1,60 @@
 <script>
     import { onMount, onDestroy } from "svelte";
-    import { FixerElement } from "./FixerElement";
     import { restoreSelection, saveSelection } from "./selection";
-    import FixList from "./FixList.svelte";
 
     let lastUpdate = Date.now();
     let curVersion = 1;
     let curText = "";
+    let resultText = "";
     let curTime = Date.now();
     let lastVersion = 1;
     let updateBeacon = null;
     let responseData = null;
     let responseErr = null;
     let responseFetching = false;
+    let taskStemming = false;
+    let taskSpellcheck = true;
 
     onMount(() => {
         /**
          * @type {HTMLDivElement}
          */
-        const editor = document.querySelector(".editor");
+        const editor = document.querySelector("#editor");
         if (sessionStorage.getItem("text")) {
             editor.innerHTML = sessionStorage.getItem("text");
             curText = editor.innerText;
         }
         updateBeacon = setInterval(() => {
             lastUpdate = Date.now();
-            if (curVersion !== lastVersion && Date.now() - curTime > 200) {
+            if (curVersion !== lastVersion && Date.now() - curTime > 500) {
                 lastVersion = curVersion;
                 responseData = null;
                 responseErr = null;
                 responseFetching = true;
                 fetch(
-                    "https://api.benerin.co/v1/check?text=" +
-                        encodeURIComponent(curText),
+                    "https://api.benerin.web.id/?text=" +
+                        encodeURIComponent(curText) +
+                        "&tasks=" +
+                        [
+                            taskStemming && "stemming",
+                            taskSpellcheck && "spellcheck",
+                            "tokenize",
+                        ].join(","),
                     {
                         method: "GET",
-                    }
+                    },
                 )
                     .then((res) => {
                         return res.json();
                     })
                     .then((data) => {
-                        var sel = saveSelection(editor);
-                        editor.innerHTML = data.rendered;
+                        resultText = data.text;
                         responseData = data;
-                        // init all fixer elements
-                        const fixerElements = document.querySelectorAll("u-x");
-                        fixerElements.forEach(
-                            (/** @type {HTMLElement} */ el) => {
-                                var newItem = new FixerElement();
-                                newItem.setAttribute(
-                                    "data-type",
-                                    el.getAttribute("data-type")
-                                );
-                                newItem.setAttribute(
-                                    "data-suggestion",
-                                    el.getAttribute("data-suggestion")
-                                );
-                                newItem.innerText = el.innerText;
-                                el.parentNode.replaceChild(newItem, el);
-                            }
-                        );
-
-                        setTimeout(() => {
-                            editor.focus();
-                            restoreSelection(editor, sel);
-                            sessionStorage.setItem("text", editor.innerHTML);
-                        }, 10);
-                    }).catch((err) => {
+                    })
+                    .catch((err) => {
                         responseErr = err;
-                    }).finally(() => {
+                    })
+                    .finally(() => {
                         responseFetching = false;
                     });
             }
@@ -84,27 +69,31 @@
     onDestroy(() => {
         clearInterval(updateBeacon);
     });
+
+    let updateVersion = (e) => {
+        curVersion++;
+        curTime = Date.now();
+    };
 </script>
+
+<input type="checkbox" bind:checked={taskSpellcheck} on:change={updateVersion} /> Spellcheck
+<input type="checkbox" bind:checked={taskStemming} on:change={updateVersion} /> Stemming
 
 <div
     class="editor m-2"
-    contenteditable={!responseFetching}
+    id="editor"
+    contenteditable={true}
     data-gramm="false"
     placeholder={curText ? "" : "Ketik konten"}
 />
+
+<div class="editor m-2" data-gramm="false" placeholder={resultText} />
 
 <div>
     {#if curVersion !== lastVersion}
         <div class="text-center text-gray-500">
             <i>Menunggu selesai mengetik...</i>
         </div>
-    {:else if responseData && responseData.structure}
-        <div class="text-center text-gray-500">
-            <i>Daftar koreksi:</i>
-        </div>
-        {#each responseData.structure as lexicon}
-            <FixList lexicon={lexicon} />
-        {/each}
     {:else if responseErr}
         <div class="text-center text-gray-500">
             <i>Ada kesalahan teknis...</i>
