@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Enable corepack
+        run: corepack enable
       - name: Install and build web
         run: yarn install --frozen-lockfile && yarn build
       - name: Add CNAME
