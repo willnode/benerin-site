@@ -12,8 +12,8 @@
     let responseData = null;
     let responseErr = null;
     let responseFetching = false;
-    let taskStemming = false;
-    let taskSpellcheck = true;
+    let taskStemming = true;
+    let taskSpellcheck = false;
 
     onMount(() => {
         /**
@@ -31,19 +31,17 @@
                 responseData = null;
                 responseErr = null;
                 responseFetching = true;
-                fetch(
-                    "https://api.benerin.web.id/?text=" +
-                        encodeURIComponent(curText) +
-                        "&tasks=" +
-                        [
+                fetch("https://api.benerin.web.id/", {
+                    method: "POST",
+                    body: JSON.stringify({
+                        text: curText,
+                        tasks: [
                             taskStemming && "stemming",
                             taskSpellcheck && "spellcheck",
                             "tokenize",
                         ].join(","),
-                    {
-                        method: "GET",
-                    },
-                )
+                    }),
+                })
                     .then((res) => {
                         return res.json();
                     })
@@ -76,8 +74,14 @@
     };
 </script>
 
-<input type="checkbox" bind:checked={taskSpellcheck} on:change={updateVersion} /> Spellcheck
-<input type="checkbox" bind:checked={taskStemming} on:change={updateVersion} /> Stemming
+<input
+    type="checkbox"
+    bind:checked={taskSpellcheck}
+    on:change={updateVersion}
+/>
+Spellcheck
+<input type="checkbox" bind:checked={taskStemming} on:change={updateVersion} />
+Stemming
 
 <div
     class="editor m-2"
