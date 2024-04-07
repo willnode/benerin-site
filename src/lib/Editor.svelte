@@ -33,6 +33,10 @@
                 responseFetching = true;
                 fetch("https://api.benerin.web.id/", {
                     method: "POST",
+                    headers: {
+                        "Accept": "application/json",
+                        "Content-Type": "application/json",
+                    },
                     body: JSON.stringify({
                         text: curText,
                         tasks: [
