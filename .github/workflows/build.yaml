@@ -14,7 +14,7 @@ jobs:
       - name: Install and build web
         run: yarn install --frozen-lockfile && yarn build
       - name: Add CNAME
-        run: echo benerin.co > ./dist/CNAME
+        run: echo benerin.web.id > ./dist/CNAME
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
