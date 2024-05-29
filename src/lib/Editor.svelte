@@ -43,7 +43,7 @@
                             taskStemming && "stemming",
                             taskSpellcheck && "spellcheck",
                             "tokenize",
-                        ].join(","),
+                        ].filter(x => x),
                     }),
                 })
                     .then((res) => {
