@@ -40,8 +40,8 @@
                     body: JSON.stringify({
                         text: curText,
                         tasks: [
-                            taskStemming && "stemming",
                             taskSpellcheck && "spellcheck",
+                            taskStemming && "stemming",
                             "tokenize",
                         ].filter(x => x),
                     }),
